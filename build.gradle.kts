@@ -17,7 +17,7 @@ repositories {
 val vertxVersion = "4.1.2"
 val junitJupiterVersion = "5.7.0"
 
-val mainVerticleName = "edgediscovery.MainVerticle"
+val mainVerticleName = "edge.discovery.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
 
 val watchForChange = "src/**/*"

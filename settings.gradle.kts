@@ -1,1 +1,1 @@
-rootProject.name = "edgediscovery"
+rootProject.name = "edge-discovery"

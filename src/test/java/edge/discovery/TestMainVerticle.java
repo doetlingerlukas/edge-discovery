@@ -1,4 +1,4 @@
-package edgediscovery;
+package edge.discovery;
 
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
