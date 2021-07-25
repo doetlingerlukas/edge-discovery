@@ -1,6 +1,7 @@
 package edge.discovery;
 
 import edge.discovery.routes.ReqHandlerRegister;
+import edge.discovery.routes.ReqHandlerSearch;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -28,10 +29,14 @@ public class MainVerticle extends AbstractVerticle {
   }
 
   protected void configureRoutes(Router router) {
-    final var registrationRoute = router.route(Constants.routePathRegistration)
+    router.route(Constants.routePathRegistration)
       .method(HttpMethod.POST)
       .handler(BodyHandler.create())
       .blockingHandler(new ReqHandlerRegister());
+
+    router.route(Constants.routePathSearch)
+      .method(HttpMethod.GET)
+      .blockingHandler(new ReqHandlerSearch());
   }
 
   public static void main(String[] args) {

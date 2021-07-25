@@ -12,6 +12,7 @@ public final class Constants {
 
   // Routes
   public static final String routePathRegistration = "/register/";
+  public static final String routePathSearch = "/search/";
 
   public static final int broadcastPort = 5999;
   public static final String broadcastMessage = "Apollo";
