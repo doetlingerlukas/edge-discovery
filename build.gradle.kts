@@ -30,8 +30,11 @@ application {
 dependencies {
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
   implementation("io.vertx:vertx-core")
+  implementation("io.vertx:vertx-web:$vertxVersion")
+
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
+  testImplementation("io.vertx:vertx-web-client:$vertxVersion")
 }
 
 java {

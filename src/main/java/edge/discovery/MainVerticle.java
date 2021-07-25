@@ -1,23 +1,41 @@
 package edge.discovery;
 
+import edge.discovery.routes.ReqHandlerRegister;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) throws Exception {
-    vertx.createHttpServer().requestHandler(req -> {
-      req.response()
-        .putHeader("content-type", "text/plain")
-        .end("Hello from Vert.x!");
-    }).listen(8899, http -> {
-      if (http.succeeded()) {
-        startPromise.complete();
-        System.out.println("HTTP server started on port 8888");
-      } else {
-        startPromise.fail(http.cause());
-      }
-    });
+    var router = Router.router(vertx);
+    configureRoutes(router);
+
+    vertx.createHttpServer()
+      .requestHandler(router)
+      .listen(Constants.serverPort, http -> {
+        if (http.succeeded()) {
+          startPromise.complete();
+          System.out.println("HTTP server started on port " + Constants.serverPort);
+        } else {
+          startPromise.fail(http.cause());
+        }
+      });
+  }
+
+  protected void configureRoutes(Router router) {
+    final var registrationRoute = router.route(Constants.routePathRegistration)
+      .method(HttpMethod.POST)
+      .handler(BodyHandler.create())
+      .blockingHandler(new ReqHandlerRegister());
+  }
+
+  public static void main(String[] args) {
+    Vertx vertx = Vertx.vertx();
+    vertx.deployVerticle(new MainVerticle());
   }
 }
