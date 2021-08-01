@@ -14,19 +14,19 @@ import java.util.stream.Collectors;
  *
  * @author Lukas Dötlinger
  */
-public class DiscoveryModule {
+public class DiscoverySearch {
 
   private List<InetAddress> subnets = new ArrayList<>();
 
   /**
    * Constructs a list of broadcast addresses for every network interface.
    */
-  public DiscoveryModule() {
+  public DiscoverySearch() {
     try {
       NetworkInterface.networkInterfaces()
         .forEach(i -> {
           try {
-            if (!i.isLoopback() && i.isUp()) {
+            if (i.isUp()) {
               this.subnets.addAll(i.getInterfaceAddresses().stream()
                 .map(InterfaceAddress::getBroadcast)
                 .filter(Objects::nonNull)
