@@ -51,7 +51,7 @@ public class DiscoverySearch {
           var socket = new DatagramSocket();
           socket.setBroadcast(true);
 
-          var buffer = Constants.broadcastMessage.getBytes();
+          var buffer = Constants.broadcastAvailableMessage.getBytes();
           var packet = new DatagramPacket(buffer, buffer.length, s, Constants.broadcastPort);
 
           socket.send(packet);

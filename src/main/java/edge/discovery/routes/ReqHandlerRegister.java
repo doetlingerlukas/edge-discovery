@@ -11,6 +11,8 @@ public class ReqHandlerRegister implements Handler<RoutingContext> {
     var res = event.response();
     var req = event.getBodyAsString();
 
+    System.out.println(req);
+
     event.vertx().eventBus().publish(Constants.eventBusName, req);
     res.setStatusCode(200).end("Ok!");
   }
