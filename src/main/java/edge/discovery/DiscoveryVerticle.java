@@ -8,11 +8,15 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class MainVerticle extends AbstractVerticle {
+public class DiscoveryVerticle extends AbstractVerticle {
+
+  protected final Logger logger = LoggerFactory.getLogger(DiscoveryVerticle.class);
 
   @Override
-  public void start(Promise<Void> startPromise) throws Exception {
+  public void start(Promise<Void> startPromise) {
     var router = Router.router(vertx);
     configureRoutes(router);
 
@@ -21,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
       .listen(Constants.serverPort, http -> {
         if (http.succeeded()) {
           startPromise.complete();
-          System.out.println("HTTP server started on port " + Constants.serverPort);
+          logger.info("HTTP server started on port " + Constants.serverPort);
         } else {
           startPromise.fail(http.cause());
         }
@@ -41,6 +45,6 @@ public class MainVerticle extends AbstractVerticle {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(new MainVerticle());
+    vertx.deployVerticle(new DiscoveryVerticle());
   }
 }
