@@ -1,5 +1,6 @@
 package edge.discovery;
 
+import edge.discovery.routes.ReqHandlerDeploy;
 import edge.discovery.routes.ReqHandlerRegister;
 import edge.discovery.routes.ReqHandlerSearch;
 import io.vertx.core.AbstractVerticle;
@@ -37,6 +38,11 @@ public class DiscoveryVerticle extends AbstractVerticle {
       .method(HttpMethod.POST)
       .handler(BodyHandler.create())
       .blockingHandler(new ReqHandlerRegister());
+
+    router.route(Constants.routePathDeploy)
+      .method(HttpMethod.POST)
+      .handler(BodyHandler.create())
+      .blockingHandler(new ReqHandlerDeploy());
 
     router.route(Constants.routePathSearch)
       .method(HttpMethod.GET)
