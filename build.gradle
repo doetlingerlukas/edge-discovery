@@ -1,0 +1,52 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'jacoco'
+// for compliance with higher Java versions
+jacoco {
+  toolVersion = "0.8.5"
+}
+// to use GitHub repositories as dependencies
+
+def vertxVersion = "4.1.2"
+def junitJupiterVersion = "5.7.0"
+
+def mainVerticleName = "edge.discovery.MainVerticle"
+def launcherClassName = "io.vertx.core.Launcher"
+
+def watchForChange = "src/**/*"
+def doOnChange = "${projectDir}/gradlew classes"
+
+repositories {
+  mavenCentral()
+  maven {
+    name "jitpack"
+    url 'https://jitpack.io' }
+}
+
+dependencies {
+  implementation(platform("io.vertx:vertx-stack-depchain:${vertxVersion}"))
+  implementation("io.vertx:vertx-core")
+  implementation("io.vertx:vertx-web:${vertxVersion}")
+  implementation("ch.qos.logback:logback-classic:1.2.3")
+  implementation("com.google.code.gson:gson:2.8.8")
+  
+  implementation('com.github.Apollo-Core:EE-Core:master-SNAPSHOT')
+  implementation('com.github.Apollo-Core:EE-Guice:main-SNAPSHOT')
+
+  testImplementation("io.vertx:vertx-junit5")
+  testImplementation("org.junit.jupiter:junit-jupiter:${junitJupiterVersion}")
+  testImplementation("io.vertx:vertx-web-client:${vertxVersion}")
+}
+
+
+test {
+  useJUnitPlatform()
+}
