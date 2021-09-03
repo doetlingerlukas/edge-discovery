@@ -16,7 +16,7 @@ public final class Constants {
   public static final String routePathSearch = "/search/";
 
   public static final int broadcastPort = 5999;
-  public static final String broadcastAvailableMessage = "apollo-available";
-  public static final String broadcastReleaseMessage = "apollo-release";
+  public static final String broadcastAvailableMessage = "ApolloAvailable";
+  public static final String broadcastReleaseMessage = "ApolloRelease";
 
 }
