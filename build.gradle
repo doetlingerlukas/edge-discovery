@@ -7,6 +7,7 @@ buildscript {
 plugins {
   id 'java'
   id 'application'
+  id 'com.github.johnrengelman.shadow' version '6.1.0'
   id 'eclipse'
   id 'maven'
   id 'jacoco'
@@ -26,7 +27,7 @@ jacoco {
 def vertxVersion = "4.1.2"
 def junitJupiterVersion = "5.7.2"
 
-def mainVerticleName = "edge.discovery.MainVerticle"
+def mainVerticleName = "edge.discovery.DiscoveryVerticle"
 def launcherClassName = "io.vertx.core.Launcher"
 
 def watchForChange = "src/**/*"
@@ -71,20 +72,22 @@ dependencies {
   testImplementation("io.vertx:vertx-web-client:${vertxVersion}")
 }
 
-jar {
-  manifest {
-    attributes 'Main-Class': 'edge.discovery.DiscoveryVerticle'
-  }
-  from {
-    configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-  }
-  exclude 'META-INF/*.RSA'
-  exclude 'META-INF/*.SF'
-  exclude 'META-INF/*.DSA'
-}
+mainClassName = launcherClassName
 
 application {
-  mainClass = 'edge.discovery.DiscoveryVerticle'
+  mainClass = launcherClassName
+}
+
+shadowJar {
+  archiveClassifier.set("fat")
+  manifest {
+    attributes("Main-Verticle": mainVerticleName)
+  }
+  mergeServiceFiles()
+}
+
+runShadow {
+  args "run", mainVerticleName, "--redeploy=${watchForChange}", "--launcher-class=${launcherClassName}", "--on-redeploy=${doOnChange}"
 }
 
 test {
