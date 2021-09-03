@@ -1,11 +1,12 @@
 package edge.discovery;
 
+import at.uibk.dps.ee.guice.starter.VertxProvider;
+import edge.discovery.device.DeviceManager;
 import edge.discovery.routes.ReqHandlerDeploy;
 import edge.discovery.routes.ReqHandlerRegister;
 import edge.discovery.routes.ReqHandlerSearch;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -14,7 +15,13 @@ import org.slf4j.LoggerFactory;
 
 public class LocalNetworkVerticle extends AbstractVerticle {
 
+  private final DeviceManager deviceManager;
+
   protected final Logger logger = LoggerFactory.getLogger(LocalNetworkVerticle.class);
+
+  public LocalNetworkVerticle(DeviceManager deviceManager) {
+    this.deviceManager = deviceManager;
+  }
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -37,12 +44,12 @@ public class LocalNetworkVerticle extends AbstractVerticle {
     router.route(Constants.routePathRegistration)
       .method(HttpMethod.POST)
       .handler(BodyHandler.create())
-      .blockingHandler(new ReqHandlerRegister());
+      .blockingHandler(new ReqHandlerRegister(this.deviceManager));
 
     router.route(Constants.routePathDeploy)
       .method(HttpMethod.POST)
       .handler(BodyHandler.create())
-      .blockingHandler(new ReqHandlerDeploy());
+      .blockingHandler(new ReqHandlerDeploy(this.deviceManager));
 
     router.route(Constants.routePathSearch)
       .method(HttpMethod.GET)
@@ -50,7 +57,11 @@ public class LocalNetworkVerticle extends AbstractVerticle {
   }
 
   public static void main(String[] args) {
-    Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(new LocalNetworkVerticle());
+    var vProv = new VertxProvider();
+    var vertx = vProv.getVertx();
+    var deviceManager = new DeviceManager(vProv);
+    var verticle = new LocalNetworkVerticle(deviceManager);
+
+    vertx.deployVerticle(verticle);
   }
 }

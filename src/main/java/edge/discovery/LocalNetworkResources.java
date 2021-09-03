@@ -3,6 +3,7 @@ package edge.discovery;
 import com.google.inject.Inject;
 import at.uibk.dps.ee.core.LocalResources;
 import at.uibk.dps.ee.guice.starter.VertxProvider;
+import edge.discovery.device.DeviceManager;
 import io.vertx.core.Vertx;
 
 /**
@@ -10,9 +11,12 @@ import io.vertx.core.Vertx;
  * usable processing resources within the same local network as the triggering
  * Apollo instance.
  * 
- * @author Fedor Smirnov
+ * @author Fedor Smirnov, Lukas Dötlinger
  */
 public class LocalNetworkResources implements LocalResources {
+
+  private final DiscoverySearch discoverySearch;
+  private DeviceManager deviceManager;
 
   protected final Vertx vertx;
 
@@ -23,22 +27,25 @@ public class LocalNetworkResources implements LocalResources {
    */
   @Inject
   public LocalNetworkResources(VertxProvider vProv) {
+    this.discoverySearch = new DiscoverySearch();
+    this.deviceManager = new DeviceManager(vProv);
     this.vertx = vProv.getVertx();
   }
 
   @Override
   public void init() {
-    // Create the Discovery Verticle (should maybe be named LocalNetwork Verticle or
-    // sth since it is going to do more than just discovering the stuff) using the injected Vertx context
-    
-    // The whole adjustment of the Specification also has to happen here. 
+    var verticle = new LocalNetworkVerticle(this.deviceManager);
+    this.vertx.deployVerticle(verticle);
 
+    // Start broadcast in subnets.
+    this.discoverySearch.broadcast();
+    
+    // The whole adjustment of the Specification also has to happen here.
   }
 
   @Override
   public void close() {
-    // Derigister the current Apollo instance from the occupied local network resources.
-
+    deviceManager.releaseAllDevice();
   }
 
 }

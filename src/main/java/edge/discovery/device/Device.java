@@ -1,5 +1,7 @@
 package edge.discovery.device;
 
+import java.net.InetAddress;
+
 /**
  * Class representing an edge device.
  *
@@ -8,7 +10,7 @@ package edge.discovery.device;
 public class Device {
 
   private final int id;
-  private final String address;
+  private final InetAddress address;
   private final String name;
 
   private DeviceArch arch;
@@ -16,7 +18,7 @@ public class Device {
   private int ramSize;
   private String key;
 
-  public Device(int id, String address, String name, String key) {
+  public Device(int id, InetAddress address, String name, String key) {
     this.id = id;
     this.address = address;
     this.name = name;
@@ -27,7 +29,7 @@ public class Device {
     return id;
   }
 
-  public String getAddress() {
+  public InetAddress getAddress() {
     return address;
   }
 

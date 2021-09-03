@@ -1,5 +1,7 @@
 package edge.discovery;
 
+import at.uibk.dps.ee.guice.starter.VertxProvider;
+import edge.discovery.device.DeviceManager;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.WebClient;
@@ -15,8 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestLocalNetworkVerticle {
 
   @BeforeEach
-  void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new LocalNetworkVerticle(), testContext.succeeding(id -> testContext.completeNow()));
+  void deploy_verticle(VertxTestContext testContext) {
+    var vProv = new VertxProvider();
+    var vertx = vProv.getVertx();
+    var deviceManager = new DeviceManager(vProv);
+    var verticle = new LocalNetworkVerticle(deviceManager);
+
+    vertx.deployVerticle(verticle, testContext.succeeding(id -> testContext.completeNow()));
   }
 
   @Test
