@@ -12,9 +12,9 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DiscoveryVerticle extends AbstractVerticle {
+public class LocalNetworkVerticle extends AbstractVerticle {
 
-  protected final Logger logger = LoggerFactory.getLogger(DiscoveryVerticle.class);
+  protected final Logger logger = LoggerFactory.getLogger(LocalNetworkVerticle.class);
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -51,6 +51,6 @@ public class DiscoveryVerticle extends AbstractVerticle {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(new DiscoveryVerticle());
+    vertx.deployVerticle(new LocalNetworkVerticle());
   }
 }

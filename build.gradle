@@ -27,7 +27,7 @@ jacoco {
 def vertxVersion = "4.1.2"
 def junitJupiterVersion = "5.7.2"
 
-def mainVerticleName = "edge.discovery.DiscoveryVerticle"
+def mainVerticleName = "edge.discovery.LocalNetworkVerticle"
 def launcherClassName = "io.vertx.core.Launcher"
 
 def watchForChange = "src/**/*"

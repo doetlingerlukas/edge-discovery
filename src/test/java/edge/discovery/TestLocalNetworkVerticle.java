@@ -12,11 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)
-public class TestDiscoveryVerticle {
+public class TestLocalNetworkVerticle {
 
   @BeforeEach
   void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new DiscoveryVerticle(), testContext.succeeding(id -> testContext.completeNow()));
+    vertx.deployVerticle(new LocalNetworkVerticle(), testContext.succeeding(id -> testContext.completeNow()));
   }
 
   @Test

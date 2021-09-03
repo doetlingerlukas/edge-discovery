@@ -7,7 +7,7 @@ import io.vertx.core.Vertx;
 
 /**
  * Class implementing the operations require for the init and the cleanup of
- * usable processing resources within the same local network as the triggerring
+ * usable processing resources within the same local network as the triggering
  * Apollo instance.
  * 
  * @author Fedor Smirnov
