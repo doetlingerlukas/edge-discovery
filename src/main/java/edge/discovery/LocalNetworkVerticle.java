@@ -61,7 +61,10 @@ public class LocalNetworkVerticle extends AbstractVerticle {
     var vertx = vProv.getVertx();
     var deviceManager = new DeviceManager(vProv);
     var verticle = new LocalNetworkVerticle(deviceManager);
+    var discoverySearch = new DiscoverySearch();
 
     vertx.deployVerticle(verticle);
+
+    discoverySearch.broadcast();
   }
 }

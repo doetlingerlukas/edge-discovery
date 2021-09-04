@@ -5,6 +5,7 @@ import edge.discovery.device.Device;
 import edge.discovery.device.DeviceArch;
 import edge.discovery.device.DeviceManager;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class ReqHandlerRegister implements Handler<RoutingContext> {
 
     logger.info("Received device information: " + req);
 
-    var reqJson = event.getBodyAsJson();
+    var reqJson = new JsonObject(req);
 
     InetAddress address = InetAddress.getLoopbackAddress();
     try {
@@ -49,7 +50,7 @@ public class ReqHandlerRegister implements Handler<RoutingContext> {
 
     manager.addDevice(newDevice);
 
-    event.vertx().eventBus().publish(Constants.eventBusName, newDevice);
+    event.vertx().eventBus().publish(Constants.eventBusName, newDevice.getName());
     res.setStatusCode(200).end("Ok!");
   }
 }
