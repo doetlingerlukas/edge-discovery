@@ -1,6 +1,5 @@
 package edge.discovery;
 
-import at.uibk.dps.ee.guice.starter.VertxProvider;
 import edge.discovery.device.DeviceManager;
 import edge.discovery.routes.ReqHandlerDeploy;
 import edge.discovery.routes.ReqHandlerRegister;
@@ -54,22 +53,5 @@ public class LocalNetworkVerticle extends AbstractVerticle {
     router.route(Constants.routePathSearch)
       .method(HttpMethod.GET)
       .blockingHandler(new ReqHandlerSearch());
-  }
-
-  /**
-   * Used for basic testing.
-   * @deprecated for production use
-   */
-  @Deprecated
-  public static void main(String[] args) {
-    var vProv = new VertxProvider();
-    var vertx = vProv.getVertx();
-    var discoverySearch = new DiscoverySearch();
-    var deviceManager = new DeviceManager(vProv, discoverySearch);
-    var verticle = new LocalNetworkVerticle(deviceManager);
-
-    vertx.deployVerticle(verticle);
-
-    discoverySearch.broadcast();
   }
 }
