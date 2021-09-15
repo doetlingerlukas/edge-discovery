@@ -20,7 +20,7 @@ import io.vertx.core.Vertx;
 @Singleton
 public class LocalNetworkResources implements LocalResources {
 
-  protected final ResourceGraph resourceGraph;
+  protected ResourceGraph resourceGraph;
   protected DeviceManager deviceManager;
 
   protected final Vertx vertx;
@@ -45,7 +45,7 @@ public class LocalNetworkResources implements LocalResources {
     // Start broadcast in subnets.
     this.deviceManager.startSearch();
 
-
+    //resourceGraph.addVertex(PropertyServiceResourceServerless.createServerlessResource("test", "http:\\test-resource.local"));
   }
 
   @Override

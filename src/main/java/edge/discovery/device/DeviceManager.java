@@ -1,6 +1,9 @@
 package edge.discovery.device;
 
 import at.uibk.dps.ee.guice.starter.VertxProvider;
+import at.uibk.dps.ee.model.graph.ResourceGraph;
+import at.uibk.dps.ee.model.graph.SpecificationProvider;
+import at.uibk.dps.ee.model.properties.PropertyServiceResourceServerless;
 import edge.discovery.Constants;
 import edge.discovery.DiscoverySearch;
 import io.vertx.core.Future;
@@ -36,12 +39,14 @@ public class DeviceManager {
   private List<Device> devices;
   private WebClient httpClient;
   private DiscoverySearch discoverySearch;
+  protected final ResourceGraph resourceGraph;
 
   @Inject
-  public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch) {
+  public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch, final SpecificationProvider specificationProvider) {
     this.devices = new ArrayList<>();
     this.httpClient = WebClient.create(vProv.getVertx());
     this.discoverySearch = discoverySearch;
+    this.resourceGraph = specificationProvider.getResourceGraph();
   }
 
   /**
@@ -63,6 +68,8 @@ public class DeviceManager {
 
   public void addDevice(Device device) {
     devices.add(device);
+
+    resourceGraph.addVertex(PropertyServiceResourceServerless.createServerlessResource(device.getName(), device.getAddress().toString()));
   }
 
   /**

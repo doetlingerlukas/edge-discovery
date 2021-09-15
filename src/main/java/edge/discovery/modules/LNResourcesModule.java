@@ -5,7 +5,7 @@ import edge.discovery.LocalNetworkResources;
 
 /**
  * Configures the classes for the init and cleanup of local network resources.
- * 
+ *
  * @author Fedor Smirnov
  */
 public class LNResourcesModule extends ResourceModule {
