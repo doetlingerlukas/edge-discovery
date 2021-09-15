@@ -56,12 +56,17 @@ public class LocalNetworkVerticle extends AbstractVerticle {
       .blockingHandler(new ReqHandlerSearch());
   }
 
+  /**
+   * Used for basic testing.
+   * @deprecated for production use
+   */
+  @Deprecated
   public static void main(String[] args) {
     var vProv = new VertxProvider();
     var vertx = vProv.getVertx();
-    var deviceManager = new DeviceManager(vProv);
-    var verticle = new LocalNetworkVerticle(deviceManager);
     var discoverySearch = new DiscoverySearch();
+    var deviceManager = new DeviceManager(vProv, discoverySearch);
+    var verticle = new LocalNetworkVerticle(deviceManager);
 
     vertx.deployVerticle(verticle);
 

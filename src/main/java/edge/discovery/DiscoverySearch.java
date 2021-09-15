@@ -1,5 +1,6 @@
 package edge.discovery;
 
+import com.google.inject.Inject;
 import io.vertx.core.json.JsonArray;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class DiscoverySearch {
   /**
    * Constructs a list of broadcast addresses for every network interface.
    */
+  @Inject
   public DiscoverySearch() {
     try {
       NetworkInterface.networkInterfaces()
