@@ -1,5 +1,6 @@
 package edge.discovery;
 
+import java.util.concurrent.CountDownLatch;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -31,7 +32,8 @@ public class LocalNetworkResources implements LocalResources {
    * @param vProv the vertx provider.
    */
   @Inject
-  public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider, DeviceManager deviceManager) {
+  public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider,
+      DeviceManager deviceManager) {
     this.resourceGraph = specProvider.getResourceGraph();
     this.deviceManager = deviceManager;
     this.vertx = vProv.getVertx();
@@ -42,10 +44,31 @@ public class LocalNetworkResources implements LocalResources {
     var verticle = new LocalNetworkVerticle(this.deviceManager);
     this.vertx.deployVerticle(verticle);
 
-    // Start broadcast in subnets.
-    this.deviceManager.startSearch();
+    // So, my guess is that it just takes too long for the device to answer so that
+    // it is added while the enactment is already under way (we will implement sth
+    // like this later, but it comes with a whole load of concurrency and
+    // synchronization issues)
 
-    //resourceGraph.addVertex(PropertyServiceResourceServerless.createServerlessResource("test", "http:\\test-resource.local"));
+    // Start broadcast in subnets.
+    this.deviceManager.startSearch(); // this one is effectively asynchronous, since the device node
+                                      // is only added after the device answers -> Apollo just does
+                                      // its thing, before the devices can answer
+
+    // try to wait at this point, so that this method blocks the rest of the flow
+    // until we have the device answers
+
+    CountDownLatch latch = new CountDownLatch(1);
+    int secondsToWait = 5; // this one should be configurable via Gui
+
+    this.vertx.setTimer(secondsToWait * 1000, timerId -> {
+      latch.countDown();
+    });
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
+    }
   }
 
   @Override
