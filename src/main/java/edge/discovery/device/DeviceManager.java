@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -87,12 +88,12 @@ public class DeviceManager {
     var device = deviceOptional.get();
     Promise<Boolean> promise = Promise.promise();
 
-    httpClient.post("https://" + device.getAddress().toString() + ":8080/system/function")
+    httpClient.post("http://" + device.getAddress().toString() + ":8080/system/functions")
       .putHeader("content-type", "application/json")
+      .putHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(("admin-" + device.getKey()).getBytes()) )
       .sendJson(new JsonObject()
-        .put("service", function)
+        .put("service", function.replaceAll("/", "-"))
         .put("image", function)
-        .put("registryAuth", device.getKey())
         .toString())
       .onSuccess(res -> {
         if (res.statusCode() == 200) {

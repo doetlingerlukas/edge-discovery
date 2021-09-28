@@ -1,5 +1,7 @@
 package edge.discovery;
 
+import at.uibk.dps.ee.model.properties.PropertyServiceMapping;
+import at.uibk.dps.ee.model.properties.PropertyServiceMappingLocal;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -9,6 +11,10 @@ import at.uibk.dps.ee.model.graph.ResourceGraph;
 import at.uibk.dps.ee.model.graph.SpecificationProvider;
 import edge.discovery.device.DeviceManager;
 import io.vertx.core.Vertx;
+import net.sf.opendse.model.Mapping;
+import net.sf.opendse.model.Mappings;
+import net.sf.opendse.model.Resource;
+import net.sf.opendse.model.Task;
 
 /**
  * Class implementing the operations require for the init and the cleanup of
@@ -21,6 +27,7 @@ import io.vertx.core.Vertx;
 public class LocalNetworkResources implements LocalResources {
 
   protected ResourceGraph resourceGraph;
+  protected final Mappings<Task, Resource> mappings;
   protected DeviceManager deviceManager;
 
   protected final Vertx vertx;
@@ -33,6 +40,7 @@ public class LocalNetworkResources implements LocalResources {
   @Inject
   public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider, DeviceManager deviceManager) {
     this.resourceGraph = specProvider.getResourceGraph();
+    this.mappings = specProvider.getMappings();
     this.deviceManager = deviceManager;
     this.vertx = vProv.getVertx();
   }
@@ -44,8 +52,6 @@ public class LocalNetworkResources implements LocalResources {
 
     // Start broadcast in subnets.
     this.deviceManager.startSearch();
-
-    //resourceGraph.addVertex(PropertyServiceResourceServerless.createServerlessResource("test", "http:\\test-resource.local"));
   }
 
   @Override
