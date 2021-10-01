@@ -1,11 +1,9 @@
 package edge.discovery.device;
 
 import at.uibk.dps.ee.guice.starter.VertxProvider;
-import at.uibk.dps.ee.model.graph.ResourceGraph;
-import at.uibk.dps.ee.model.graph.SpecificationProvider;
-import at.uibk.dps.ee.model.properties.PropertyServiceResourceServerless;
 import edge.discovery.Constants;
 import edge.discovery.DiscoverySearch;
+import edge.discovery.graph.SpecificationUpdate;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -40,14 +38,15 @@ public class DeviceManager {
   private List<Device> devices;
   private WebClient httpClient;
   private DiscoverySearch discoverySearch;
-  protected final ResourceGraph resourceGraph;
+  protected final SpecificationUpdate specUpdate;
 
   @Inject
-  public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch, final SpecificationProvider specificationProvider) {
+  public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
+      final SpecificationUpdate specUpdate) {
     this.devices = new ArrayList<>();
     this.httpClient = WebClient.create(vProv.getVertx());
     this.discoverySearch = discoverySearch;
-    this.resourceGraph = specificationProvider.getResourceGraph();
+    this.specUpdate = specUpdate;
   }
 
   /**
@@ -62,15 +61,12 @@ public class DeviceManager {
   }
 
   public Optional<Device> getDeviceById(int id) {
-    return this.devices.stream()
-      .filter(device -> device.getId() == id)
-      .findFirst();
+    return this.devices.stream().filter(device -> device.getId() == id).findFirst();
   }
 
   public void addDevice(Device device) {
     devices.add(device);
-
-    resourceGraph.addVertex(PropertyServiceResourceServerless.createServerlessResource(device.getName(), device.getAddress().toString()));
+    specUpdate.addLocalResourceToModel(device);
   }
 
   /**
@@ -89,20 +85,18 @@ public class DeviceManager {
     Promise<Boolean> promise = Promise.promise();
 
     httpClient.post("http://" + device.getAddress().toString() + ":8080/system/functions")
-      .putHeader("content-type", "application/json")
-      .putHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(("admin-" + device.getKey()).getBytes()) )
-      .sendJson(new JsonObject()
-        .put("service", function.replaceAll("/", "-"))
-        .put("image", function)
-        .toString())
-      .onSuccess(res -> {
-        if (res.statusCode() == 200) {
-          promise.complete(true);
-        } else {
-          promise.complete(false);
-        }
-      })
-      .onFailure(e -> logger.debug(e.getMessage()));
+        .putHeader("content-type", "application/json")
+        .putHeader("Authorization",
+            "Basic " + Base64.getEncoder().encodeToString(("admin-" + device.getKey()).getBytes()))
+        .sendJson(new JsonObject().put("service", function.replaceAll("/", "-"))
+            .put("image", function).toString())
+        .onSuccess(res -> {
+          if (res.statusCode() == 200) {
+            promise.complete(true);
+          } else {
+            promise.complete(false);
+          }
+        }).onFailure(e -> logger.debug(e.getMessage()));
 
     return promise.future();
   }
@@ -118,7 +112,8 @@ public class DeviceManager {
     socket.setBroadcast(true);
 
     var buffer = Constants.broadcastReleaseMessage.getBytes();
-    var packet = new DatagramPacket(buffer, buffer.length, device.getAddress(), Constants.broadcastPort);
+    var packet =
+        new DatagramPacket(buffer, buffer.length, device.getAddress(), Constants.broadcastPort);
 
     socket.send(packet);
     socket.close();
@@ -127,20 +122,18 @@ public class DeviceManager {
   }
 
   public void releaseAllDevice() {
-    this.devices
-      .forEach(device -> {
-        try {
-          releaseDevice(device);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      });
+    this.devices.forEach(device -> {
+      try {
+        releaseDevice(device);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
   }
 
   public void removeDeviceFromList(Device device) {
-    this.devices = this.devices.stream()
-      .filter(d -> d.getId() == device.getId())
-      .collect(Collectors.toList());
+    this.devices =
+        this.devices.stream().filter(d -> d.getId() == device.getId()).collect(Collectors.toList());
   }
 
   public int getNextDeviceId() {
