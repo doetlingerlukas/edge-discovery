@@ -37,10 +37,10 @@ public class DiscoverySearch {
               .filter(si -> si.getAddress() instanceof Inet4Address)
               .collect(Collectors.toList());
 
-            this.broadcastAddresses.addAll(new_subnets.stream()
+            /*this.broadcastAddresses.addAll(new_subnets.stream()
               .map(InterfaceAddress::getBroadcast)
               .filter(Objects::nonNull)
-              .collect(Collectors.toList()));
+              .collect(Collectors.toList()));*/
 
             this.subnets.addAll(new_subnets);
           }
@@ -66,20 +66,22 @@ public class DiscoverySearch {
    * Send a broadcast to all subnets.
    */
   public void broadcast() {
-    this.broadcastAddresses.forEach(s -> {
-      try {
-        var socket = new DatagramSocket();
-        socket.setBroadcast(true);
+    this.broadcastAddresses.stream()
+      .distinct()
+      .forEach(a -> {
+        try {
+          var socket = new DatagramSocket();
+          socket.setBroadcast(true);
 
-        var buffer = Constants.broadcastAvailableMessage.getBytes();
-        var packet = new DatagramPacket(buffer, buffer.length, s, Constants.broadcastPort);
+          var buffer = Constants.broadcastAvailableMessage.getBytes();
+          var packet = new DatagramPacket(buffer, buffer.length, a, Constants.broadcastPort);
 
-        socket.send(packet);
-        socket.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
+          socket.send(packet);
+          socket.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      });
   }
 
   /**
