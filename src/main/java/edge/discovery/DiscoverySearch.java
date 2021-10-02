@@ -22,32 +22,40 @@ import java.util.stream.Collectors;
 public class DiscoverySearch {
 
   private List<InterfaceAddress> subnets = new ArrayList<>();
-  protected Set<InetAddress> bcAddresses = new HashSet<>();
+  protected Set<InetAddress> broadcastAddresses = new HashSet<>();
 
   /**
    * Constructs a list of broadcast addresses for every network interface.
    */
   @Inject
   public DiscoverySearch() {
-    // try {
-    // NetworkInterface.networkInterfaces()
-    // .forEach(i -> {
-    // try {
-    // if (i.isUp()) {
-    // this.subnets.addAll(i.getInterfaceAddresses().stream()
-    // .filter(si -> si.getAddress() instanceof Inet4Address)
-    // .collect(Collectors.toList()));
-    // }
-    // } catch (SocketException e) {
-    // e.printStackTrace();
-    // }
-    // });
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // }
     try {
-      bcAddresses.add(InetAddress.getByName("192.168.0.255"));
-      bcAddresses.add(InetAddress.getByName("127.0.0.1"));
+      NetworkInterface.networkInterfaces().forEach(i -> {
+        try {
+          if (i.isUp()) {
+            var new_subnets = i.getInterfaceAddresses().stream()
+              .filter(si -> si.getAddress() instanceof Inet4Address)
+              .collect(Collectors.toList());
+
+            this.broadcastAddresses.addAll(new_subnets.stream()
+              .map(InterfaceAddress::getBroadcast)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList()));
+
+            this.subnets.addAll(new_subnets);
+          }
+        } catch (SocketException e) {
+          e.printStackTrace();
+        }
+      });
+    } catch (Exception e) {
+     e.printStackTrace();
+    }
+
+    // Used for debugging
+    try {
+      broadcastAddresses.add(InetAddress.getByName("192.168.0.255"));
+      broadcastAddresses.add(InetAddress.getByName("127.0.0.1"));
     } catch (UnknownHostException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -58,7 +66,7 @@ public class DiscoverySearch {
    * Send a broadcast to all subnets.
    */
   public void broadcast() {
-    this.bcAddresses.stream().forEach(s -> {
+    this.broadcastAddresses.forEach(s -> {
       try {
         var socket = new DatagramSocket();
         socket.setBroadcast(true);
