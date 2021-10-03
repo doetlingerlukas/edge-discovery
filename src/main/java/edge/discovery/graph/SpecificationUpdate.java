@@ -5,9 +5,13 @@ import at.uibk.dps.ee.model.constants.ConstantsEEModel;
 import at.uibk.dps.ee.model.graph.EnactmentSpecification;
 import at.uibk.dps.ee.model.graph.SpecificationProvider;
 import at.uibk.dps.ee.model.properties.PropertyServiceLink;
+import at.uibk.dps.ee.model.properties.PropertyServiceMapping;
 import at.uibk.dps.ee.model.properties.PropertyServiceResourceServerless;
 import com.google.inject.Inject;
 import edge.discovery.device.Device;
+import net.sf.opendse.model.Mapping;
+import net.sf.opendse.model.Resource;
+import net.sf.opendse.model.Task;
 
 import java.util.Set;
 
@@ -31,14 +35,19 @@ public class SpecificationUpdate {
 
   public void addLocalResourceToModel(Device device) {
     // add the resource to the resource graph (one resource node per function deployed on the device)
-    var new_vertex = PropertyServiceResourceServerless.createServerlessResource(device.getName(), device.getAddress().toString());
-    spec.getResourceGraph().addVertex(new_vertex);
+    var newResource = PropertyServiceResourceServerless.createServerlessResource(device.getName(), device.getAddress().toString());
+    spec.getResourceGraph().addVertex(newResource);
 
     // add the connection between host and device
-    var local_vertex = spec.getResourceGraph().getVertex(ConstantsEEModel.idLocalResource);
-    PropertyServiceLink.connectResources(spec.getResourceGraph(), local_vertex, new_vertex);
+    var localResource = spec.getResourceGraph().getVertex(ConstantsEEModel.idLocalResource);
+    PropertyServiceLink.connectResources(spec.getResourceGraph(), localResource, newResource);
     
     // add the mappings of application tasks to the device nodes
+    for (Mapping<Task, Resource> mapping : spec.getMappings()) {
+      if (PropertyServiceMapping.getEnactmentMode(mapping).equals(PropertyServiceMapping.EnactmentMode.Local)) {
+        mapping.setTarget(newResource);
+      }
+    }
 
     // trigger the GUI update
     listeners.forEach(ModelModificationListener::reactToModelModification);
