@@ -1,17 +1,15 @@
 package edge.discovery.graph;
 
-import java.util.Set;
-
-import at.uibk.dps.ee.model.constants.ConstantsEEModel;
-import at.uibk.dps.ee.model.properties.PropertyServiceLink;
-import com.google.inject.Inject;
 import at.uibk.dps.ee.core.ModelModificationListener;
+import at.uibk.dps.ee.model.constants.ConstantsEEModel;
 import at.uibk.dps.ee.model.graph.EnactmentSpecification;
 import at.uibk.dps.ee.model.graph.SpecificationProvider;
+import at.uibk.dps.ee.model.properties.PropertyServiceLink;
 import at.uibk.dps.ee.model.properties.PropertyServiceResourceServerless;
+import com.google.inject.Inject;
 import edge.discovery.device.Device;
-import edu.uci.ics.jung.graph.util.EdgeType;
-import net.sf.opendse.model.Link;
+
+import java.util.Set;
 
 /**
  * The {@link SpecificationUpdate} updates the specification to account for the
@@ -38,11 +36,9 @@ public class SpecificationUpdate {
 
     // add the connection between host and device
     var local_vertex = spec.getResourceGraph().getVertex(ConstantsEEModel.idLocalResource);
-    final var link = new Link("test");
-    spec.getResourceGraph().addEdge(link, new_vertex, local_vertex, EdgeType.DIRECTED);
+    PropertyServiceLink.connectResources(spec.getResourceGraph(), local_vertex, new_vertex);
     
     // add the mappings of application tasks to the device nodes
-    
 
     // trigger the GUI update
     listeners.forEach(ModelModificationListener::reactToModelModification);
