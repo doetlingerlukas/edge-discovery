@@ -3,9 +3,11 @@ package edge.discovery.graph;
 import at.uibk.dps.ee.core.ModelModificationListener;
 import at.uibk.dps.ee.model.constants.ConstantsEEModel;
 import at.uibk.dps.ee.model.graph.EnactmentSpecification;
+import at.uibk.dps.ee.model.graph.MappingsConcurrent;
 import at.uibk.dps.ee.model.graph.SpecificationProvider;
 import at.uibk.dps.ee.model.properties.PropertyServiceLink;
 import at.uibk.dps.ee.model.properties.PropertyServiceMapping;
+import at.uibk.dps.ee.model.properties.PropertyServiceMappingLocal;
 import at.uibk.dps.ee.model.properties.PropertyServiceResourceServerless;
 import com.google.inject.Inject;
 import edge.discovery.device.Device;
@@ -25,11 +27,13 @@ import java.util.Set;
 public class SpecificationUpdate {
 
   protected final EnactmentSpecification spec;
+  protected final MappingsConcurrent mappings;
   protected final Set<ModelModificationListener> listeners;
   
   @Inject
   public SpecificationUpdate(SpecificationProvider specProv, Set<ModelModificationListener> listeners) {
     this.spec = specProv.getSpecification();
+    this.mappings = spec.getMappings();
     this.listeners = listeners;
   }
 
@@ -43,11 +47,10 @@ public class SpecificationUpdate {
     PropertyServiceLink.connectResources(spec.getResourceGraph(), localResource, newResource);
     
     // add the mappings of application tasks to the device nodes
-    for (Mapping<Task, Resource> mapping : spec.getMappings()) {
-      if (PropertyServiceMapping.getEnactmentMode(mapping).equals(PropertyServiceMapping.EnactmentMode.Local)) {
-        mapping.setTarget(newResource);
-      }
-    }
+    spec.getEnactmentGraph().getVertices().forEach(t -> {
+      mappings.addMapping(PropertyServiceMapping.createMapping(t, newResource, PropertyServiceMapping.EnactmentMode.Serverless,
+        t.toString() + device.getName()));
+    });
 
     // trigger the GUI update
     listeners.forEach(ModelModificationListener::reactToModelModification);
