@@ -37,10 +37,10 @@ public class DiscoverySearch {
               .filter(si -> si.getAddress() instanceof Inet4Address)
               .collect(Collectors.toList());
 
-            /*this.broadcastAddresses.addAll(new_subnets.stream()
+            this.broadcastAddresses.addAll(new_subnets.stream()
               .map(InterfaceAddress::getBroadcast)
               .filter(Objects::nonNull)
-              .collect(Collectors.toList()));*/
+              .collect(Collectors.toList()));
 
             this.subnets.addAll(new_subnets);
           }

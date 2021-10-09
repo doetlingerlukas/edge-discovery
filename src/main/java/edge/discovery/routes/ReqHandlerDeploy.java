@@ -32,6 +32,8 @@ public class ReqHandlerDeploy implements Handler<RoutingContext> {
 
     Future<Boolean> future = deviceManager.deployFunction(deviceId, function);
 
-    future.onComplete(asyncRes -> res.setStatusCode(200).end(asyncRes.result().toString()));
+    future.onComplete(asyncRes -> {
+      res.setStatusCode(200).end(asyncRes.result().toString());
+    });
   }
 }
