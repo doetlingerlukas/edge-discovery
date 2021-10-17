@@ -11,6 +11,7 @@ import edge.discovery.device.Device;
 import net.sf.opendse.model.Mapping;
 import net.sf.opendse.model.Resource;
 import net.sf.opendse.model.Task;
+import net.sf.opendse.model.properties.TaskPropertyService;
 
 import java.util.Set;
 
@@ -45,8 +46,10 @@ public class SpecificationUpdate {
     
     // add the mappings of application tasks to the device nodes
     spec.getEnactmentGraph().getVertices().forEach(t -> {
-      mappings.addMapping(PropertyServiceMapping.createMapping(t, newResource, PropertyServiceMapping.EnactmentMode.Serverless,
-        t.toString() + device.getName()));
+      if (TaskPropertyService.isProcess(t)) {
+        mappings.addMapping(PropertyServiceMapping.createMapping(t, newResource, PropertyServiceMapping.EnactmentMode.Serverless,
+          t.toString() + device.getName()));
+      }
     });
 
     // trigger the GUI update
