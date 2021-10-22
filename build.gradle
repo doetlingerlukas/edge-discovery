@@ -13,16 +13,10 @@ plugins {
   id 'jacoco'
 }
 
-//java {
-//  sourceCompatibility = JavaVersion.VERSION_11
-//  targetCompatibility = JavaVersion.VERSION_11
-//}
-
 // for compliance with higher Java versions
 jacoco {
   toolVersion = "0.8.5"
 }
-// to use GitHub repositories as dependencies
 
 def vertxVersion = "4.1.2"
 def junitJupiterVersion = "5.7.2"
@@ -37,7 +31,8 @@ repositories {
   mavenCentral()
   maven {
     name "jitpack"
-    url 'https://jitpack.io' }
+    url 'https://jitpack.io'
+  }
 }
 
 dependencies {
@@ -47,33 +42,30 @@ dependencies {
     implementation project (':EE-Core')
     implementation project (':EE-Model')
   }else {
-    implementation 'com.github.Apollo-Core:EE-Guice:main-SNAPSHOT'
-    implementation 'com.github.Apollo-Core:EE-Core:master-SNAPSHOT'
-    implementation 'com.github.Apollo-Core:EE-Model:main-SNAPSHOT'
+    implementation 'com.github.Apollo-Core:EE-Guice:v1.0.0'
+    implementation 'com.github.Apollo-Core:EE-Core:v1.0.0'
+    implementation 'com.github.Apollo-Core:EE-Model:v1.0.0'
   }
 
   // SDARG Dependencies
-  implementation("com.github.FedorSmirnov89:opt4j:-SNAPSHOT")
+  implementation "com.github.FedorSmirnov89:opt4j:-SNAPSHOT"
   // dependency to opendse
-  implementation("com.github.FedorSmirnov89:opendse:-SNAPSHOT")
+  implementation "com.github.FedorSmirnov89:opendse:-SNAPSHOT"
 
-  implementation(platform("io.vertx:vertx-stack-depchain:${vertxVersion}"))
-  implementation("io.vertx:vertx-core:${vertxVersion}")
-  implementation("io.vertx:vertx-web:${vertxVersion}")
-  implementation("io.vertx:vertx-web-client:${vertxVersion}")
-  implementation("ch.qos.logback:logback-classic:1.2.5")
-  implementation("com.google.code.gson:gson:2.8.8")
-  implementation("com.google.inject:guice:5.0.1")
+  implementation platform("io.vertx:vertx-stack-depchain:${vertxVersion}")
+  implementation "io.vertx:vertx-core:${vertxVersion}"
+  implementation "io.vertx:vertx-web:${vertxVersion}"
+  implementation "io.vertx:vertx-web-client:${vertxVersion}"
+  implementation "ch.qos.logback:logback-classic:1.2.5"
+  implementation "com.google.code.gson:gson:2.8.8"
+  implementation "com.google.inject:guice:5.0.1"
 
   // Apache Commons Net used for networking stuff
-  implementation("commons-net:commons-net:3.8.0")
+  implementation "commons-net:commons-net:3.8.0"
 
-  implementation('com.github.Apollo-Core:EE-Core:master-SNAPSHOT')
-  implementation('com.github.Apollo-Core:EE-Guice:main-SNAPSHOT')
-
-  testImplementation("io.vertx:vertx-junit5:${vertxVersion}")
-  testImplementation("org.junit.jupiter:junit-jupiter:${junitJupiterVersion}")
-  testImplementation("io.vertx:vertx-web-client:${vertxVersion}")
+  testImplementation "io.vertx:vertx-junit5:${vertxVersion}"
+  testImplementation "org.junit.jupiter:junit-jupiter:${junitJupiterVersion}"
+  testImplementation "io.vertx:vertx-web-client:${vertxVersion}"
 }
 
 mainClassName = launcherClassName
