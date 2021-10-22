@@ -13,10 +13,10 @@ plugins {
   id 'jacoco'
 }
 
-java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
-}
+//java {
+//  sourceCompatibility = JavaVersion.VERSION_11
+//  targetCompatibility = JavaVersion.VERSION_11
+//}
 
 // for compliance with higher Java versions
 jacoco {
