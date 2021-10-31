@@ -41,8 +41,8 @@ dependencies {
     implementation project (':EE-Guice')
     implementation project (':EE-Core')
     implementation project (':EE-Model')
-  }else {
-    implementation 'com.github.Apollo-Core:EE-Guice:v1.0.0'
+  } else {
+    implementation 'com.github.Apollo-Core:EE-Guice:main-SNAPSHOT'
     implementation 'com.github.Apollo-Core:EE-Core:v1.0.0'
     implementation 'com.github.Apollo-Core:EE-Model:v1.0.0'
   }
