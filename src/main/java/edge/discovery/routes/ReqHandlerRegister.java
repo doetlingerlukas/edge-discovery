@@ -3,6 +3,7 @@ package edge.discovery.routes;
 import edge.discovery.Constants;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceArch;
+import edge.discovery.device.DeviceBenchmark;
 import edge.discovery.device.DeviceManager;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -43,7 +44,8 @@ public class ReqHandlerRegister implements Handler<RoutingContext> {
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
-    var newDevice = new Device(manager.getNextDeviceId(), address, reqJson.getString("name"), reqJson.getString("key"));
+    var newDevice = new Device(manager.getNextDeviceId(), address, reqJson.getString("name"), reqJson.getString("key"),
+      reqJson.getJsonObject("benchmarkResult").mapTo(DeviceBenchmark.class));
     newDevice.setNumCores(reqJson.getInteger("numCores"));
     newDevice.setRamSize(reqJson.getFloat("ramSize").intValue());
     newDevice.setArch(DeviceArch.valueOf(reqJson.getString("arch").toUpperCase()));

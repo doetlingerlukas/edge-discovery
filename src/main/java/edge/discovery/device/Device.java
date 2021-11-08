@@ -12,17 +12,19 @@ public class Device {
   private final int id;
   private final InetAddress address;
   private final String name;
+  private final DeviceBenchmark benchmark;
 
   private DeviceArch arch;
   private int numCores;
   private int ramSize;
   private String key;
 
-  public Device(int id, InetAddress address, String name, String key) {
+  public Device(int id, InetAddress address, String name, String key, DeviceBenchmark benchmark) {
     this.id = id;
     this.address = address;
     this.name = name;
     this.key = key;
+    this.benchmark = benchmark;
   }
 
   public int getId() {
@@ -67,5 +69,9 @@ public class Device {
 
   public void setRamSize(int ramSize) {
     this.ramSize = ramSize;
+  }
+
+  public DeviceBenchmark getBenchmark() {
+    return benchmark;
   }
 }
