@@ -11,6 +11,8 @@ import at.uibk.dps.ee.model.graph.SpecificationProvider;
 import edge.discovery.device.DeviceManager;
 import io.vertx.core.Vertx;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * Class implementing the operations require for the init and the cleanup of
  * usable processing resources within the same local network as the triggering
@@ -46,6 +48,19 @@ public class LocalNetworkResources implements LocalResources {
     this.vertx.deployVerticle(verticle).onComplete(asyncRes -> {
       this.deviceManager.startSearch();
     });
+
+    CountDownLatch latch = new CountDownLatch(1);
+    int secondsToWait = 5; // this one should be configurable via Gui
+
+    this.vertx.setTimer(secondsToWait * 1000, timerId -> {
+      latch.countDown();
+    });
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
+    }
   }
 
   @Override

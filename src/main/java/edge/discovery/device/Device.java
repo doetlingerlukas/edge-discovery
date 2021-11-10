@@ -35,6 +35,10 @@ public class Device {
     return address;
   }
 
+  public String getAddressString() {
+    return address.toString().substring(1);
+  }
+
   public String getKey() {
     return key;
   }

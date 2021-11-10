@@ -47,8 +47,8 @@ public class SpecificationUpdate {
     // add the mappings of application tasks to the device nodes
     spec.getEnactmentGraph().getVertices().forEach(t -> {
       if (TaskPropertyService.isProcess(t)) {
-        mappings.addMapping(PropertyServiceMapping.createMapping(t, newResource, PropertyServiceMapping.EnactmentMode.Serverless,
-          t.toString() + device.getName()));
+        mappings.addMapping(PropertyServiceMapping.createMapping(t, newResource,
+          PropertyServiceMapping.EnactmentMode.Serverless, t.toString() + device.getName()));
       }
     });
 

@@ -98,7 +98,7 @@ public class DeviceManager {
     var device = deviceOptional.get();
     Promise<Boolean> promise = Promise.promise();
 
-    httpClient.post(8080, device.getAddress().toString().substring(1), "/system/functions")
+    httpClient.post(8080, device.getAddressString(), "/system/functions")
       .basicAuthentication("admin", device.getKey())
       .putHeader("content-type", "application/json")
       .sendJson(new JsonObject().put("service", function.replaceAll("/", "-"))
