@@ -9,6 +9,7 @@ import at.uibk.dps.ee.model.properties.*;
 import at.uibk.dps.ee.model.properties.PropertyServiceFunction.UsageType;
 import com.google.inject.Inject;
 import edge.discovery.device.Device;
+import edge.discovery.device.DeviceManager;
 import net.sf.opendse.model.Mapping;
 import net.sf.opendse.model.Resource;
 import net.sf.opendse.model.Task;
@@ -72,8 +73,7 @@ public class SpecificationUpdate {
    *         given task on the given device
    */
   protected String getTriggerUrl(Task function, Device device) {
-    // TODO implement this one
-    throw new IllegalStateException("Not yet implemented");
+    return DeviceManager.getDeviceFunctionUrl(device) + function.toString();
   }
 
   /**
@@ -83,7 +83,6 @@ public class SpecificationUpdate {
    * @return the id for the resource node created to represent the device
    */
   protected String getLocalResourceId(Device device) {
-    // TODO implement this one
-    throw new IllegalStateException("Not yet implemented");
+    return device.getUniqueName();
   }
 }

@@ -84,6 +84,14 @@ public class DeviceManager {
   }
 
   /**
+   * @param device
+   * @return the base url of the faasd API for a given device
+   */
+  public static String getDeviceFunctionUrl(Device device) {
+    return "http://" + device.getAddressString() + ":8080/function/";
+  }
+
+  /**
    * Deploys a serverless function to a device.
    *
    * @param id of the device the function is deployed to.
