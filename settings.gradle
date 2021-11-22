@@ -6,6 +6,7 @@ if(startParameter.projectProperties.containsKey("local")) {
     project (':EE-Core').projectDir = new File(settingsDir, "../EE-Core")
     project (':EE-Guice').projectDir = new File(settingsDir, "../EE-Guice")
     project (':EE-Model').projectDir = new File(settingsDir, "../EE-Model")
+    project (':EE-Enactables').projectDir = new File(settingsDir, "../EE-Enactables")
 }
 
 rootProject.name = "edge-discovery"
