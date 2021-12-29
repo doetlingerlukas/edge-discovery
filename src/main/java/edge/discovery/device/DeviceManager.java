@@ -109,7 +109,7 @@ public class DeviceManager {
     httpClient.post(8080, device.getAddressString(), "/system/functions")
       .basicAuthentication("admin", device.getKey())
       .putHeader("content-type", "application/json")
-      .sendJson(new JsonObject().put("service", function.replaceAll("/", "-"))
+      .sendJson(new JsonObject().put("service", function.replaceAll(".+/", ""))
         .put("image", function))
       .onSuccess(res -> {
         if (res.statusCode() == 200) {
