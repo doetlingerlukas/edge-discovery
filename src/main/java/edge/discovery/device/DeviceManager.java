@@ -10,6 +10,7 @@ import edge.discovery.DiscoverySearch;
 import edge.discovery.graph.SpecificationUpdate;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -44,12 +45,14 @@ public class DeviceManager {
   private DiscoverySearch discoverySearch;
   protected final SpecificationUpdate specUpdate;
   protected final EnactmentSpecification spec;
+  protected final Vertx vertx;
 
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
       final SpecificationUpdate specUpdate, SpecificationProvider specProv) {
     this.devices = new ArrayList<>();
-    this.httpClient = WebClient.create(vProv.getVertx());
+    this.vertx = vProv.getVertx();
+    this.httpClient = WebClient.create(vertx);
     this.discoverySearch = discoverySearch;
     this.specUpdate = specUpdate;
     this.spec = specProv.getSpecification();
@@ -76,7 +79,11 @@ public class DeviceManager {
     spec.getMappings().forEach(m -> {
       if (PropertyServiceMapping.getEnactmentMode(m).equals(PropertyServiceMapping.EnactmentMode.Local)) {
         var image = PropertyServiceMappingLocal.getImageName(m);
-        deployFunction(device.getId(), image);
+
+        var future = deployFunction(device.getId(), image);
+        vertx.executeBlocking(promise -> {
+          future.onSuccess(res -> promise.complete());
+        });
       }
     });
 
@@ -113,13 +120,42 @@ public class DeviceManager {
         .put("image", function))
       .onSuccess(res -> {
         if (res.statusCode() == 200) {
-          promise.complete(true);
+          checkFunctionAvailability(promise, device, function);
         } else {
           promise.complete(false);
         }
       }).onFailure(e -> logger.debug(e.getMessage()));
 
     return promise.future();
+  }
+
+  /**
+   * Checks if a function is available on a host.
+   *
+   * @param promise to be fulfilled with true iff function is available
+   * @param device the function is running
+   * @param function that is being tested
+   */
+  private void checkFunctionAvailability(Promise<Boolean> promise, Device device, String function) {
+    httpClient.post(8080, device.getAddressString(),
+      "/function/" + function.replaceAll(".+/", ""))
+      .basicAuthentication("admin", device.getKey())
+      .putHeader("content-type", "application/json")
+      .sendJson(new JsonObject())
+      .onSuccess(res -> {
+        if (res.statusCode() == 404) {
+          // The function was not found on the host and is therefore not ready.
+
+          vertx.setTimer(5000, id -> {
+            checkFunctionAvailability(promise, device, function);
+          });
+        } else {
+          promise.complete(true);
+        }
+      }).onFailure(e ->  {
+        logger.debug(e.getMessage());
+        promise.complete(false);
+      });
   }
 
   /**
