@@ -14,6 +14,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +22,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
@@ -47,15 +50,24 @@ public class DeviceManager {
   protected final EnactmentSpecification spec;
   protected final Vertx vertx;
 
+  protected final int waitTimeDiscovery;
+  protected final Set<Device> discoveredDevices;
+  protected final CountDownLatch initLatch;
+
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
-      final SpecificationUpdate specUpdate, SpecificationProvider specProv) {
+      final SpecificationUpdate specUpdate, SpecificationProvider specProv,
+      @Constant(value = "waitTimeInit",
+          namespace = DeviceManager.class) final int waitTimeDiscovery) {
     this.devices = new ArrayList<>();
     this.vertx = vProv.getVertx();
     this.httpClient = WebClient.create(vertx);
     this.discoverySearch = discoverySearch;
     this.specUpdate = specUpdate;
     this.spec = specProv.getSpecification();
+    this.waitTimeDiscovery = waitTimeDiscovery;
+    this.initLatch = new CountDownLatch(1);
+    this.discoveredDevices = new HashSet<>();
   }
 
   /**
@@ -63,6 +75,23 @@ public class DeviceManager {
    */
   public void startSearch() {
     this.discoverySearch.broadcast();
+
+    this.vertx.setTimer(waitTimeDiscovery * 1000, timerId -> {
+      for (Device device : discoveredDevices) {
+        addDevice(device);
+      }
+      initLatch.countDown();
+    });
+
+    try {
+      initLatch.await();
+    } catch (InterruptedException e) {
+      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
+    }
+  }
+
+  public void noteDiscoveredDevice(Device device) {
+    this.discoveredDevices.add(device);
   }
 
   public JsonArray getNetworkSubnetsAsJson() {
@@ -77,13 +106,18 @@ public class DeviceManager {
     devices.add(device);
 
     spec.getMappings().forEach(m -> {
-      if (PropertyServiceMapping.getEnactmentMode(m).equals(PropertyServiceMapping.EnactmentMode.Local)) {
+      if (PropertyServiceMapping.getEnactmentMode(m)
+          .equals(PropertyServiceMapping.EnactmentMode.Local)) {
         var image = PropertyServiceMappingLocal.getImageName(m);
-
-        var future = deployFunction(device.getId(), image);
-        vertx.executeBlocking(promise -> {
-          future.onSuccess(res -> promise.complete());
+        CountDownLatch funcDeployLatch = new CountDownLatch(1);
+        deployFunction(device.getId(), image).onComplete(asyncRes -> {
+          funcDeployLatch.countDown();
         });
+        try {
+          funcDeployLatch.await();
+        } catch (InterruptedException e) {
+          throw new IllegalStateException("Interrupted while waiting for function deployment", e);
+        }
       }
     });
 
@@ -114,17 +148,16 @@ public class DeviceManager {
     Promise<Boolean> promise = Promise.promise();
 
     httpClient.post(8080, device.getAddressString(), "/system/functions")
-      .basicAuthentication("admin", device.getKey())
-      .putHeader("content-type", "application/json")
-      .sendJson(new JsonObject().put("service", function.replaceAll(".+/", ""))
-        .put("image", function))
-      .onSuccess(res -> {
-        if (res.statusCode() == 200) {
-          checkFunctionAvailability(promise, device, function);
-        } else {
-          promise.complete(false);
-        }
-      }).onFailure(e -> logger.debug(e.getMessage()));
+        .basicAuthentication("admin", device.getKey()).putHeader("content-type", "application/json")
+        .sendJson(
+            new JsonObject().put("service", function.replaceAll(".+/", "")).put("image", function))
+        .onSuccess(res -> {
+          if (res.statusCode() == 200) {
+            checkFunctionAvailability(promise, device, function);
+          } else {
+            promise.complete(false);
+          }
+        }).onFailure(e -> logger.debug(e.getMessage()));
 
     return promise.future();
   }
@@ -137,25 +170,22 @@ public class DeviceManager {
    * @param function that is being tested
    */
   private void checkFunctionAvailability(Promise<Boolean> promise, Device device, String function) {
-    httpClient.post(8080, device.getAddressString(),
-      "/function/" + function.replaceAll(".+/", ""))
-      .basicAuthentication("admin", device.getKey())
-      .putHeader("content-type", "application/json")
-      .sendJson(new JsonObject())
-      .onSuccess(res -> {
-        if (res.statusCode() == 404) {
-          // The function was not found on the host and is therefore not ready.
+    httpClient.post(8080, device.getAddressString(), "/function/" + function.replaceAll(".+/", ""))
+        .basicAuthentication("admin", device.getKey()).putHeader("content-type", "application/json")
+        .sendJson(new JsonObject()).onSuccess(res -> {
+          if (res.statusCode() == 404) {
+            // The function was not found on the host and is therefore not ready.
 
-          vertx.setTimer(5000, id -> {
-            checkFunctionAvailability(promise, device, function);
-          });
-        } else {
-          promise.complete(true);
-        }
-      }).onFailure(e ->  {
-        logger.debug(e.getMessage());
-        promise.complete(false);
-      });
+            vertx.setTimer(5000, id -> {
+              checkFunctionAvailability(promise, device, function);
+            });
+          } else {
+            promise.complete(true);
+          }
+        }).onFailure(e -> {
+          logger.debug(e.getMessage());
+          promise.complete(false);
+        });
   }
 
   /**

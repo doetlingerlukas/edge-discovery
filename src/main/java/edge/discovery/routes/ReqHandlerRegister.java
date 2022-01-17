@@ -49,9 +49,7 @@ public class ReqHandlerRegister implements Handler<RoutingContext> {
     newDevice.setNumCores(reqJson.getInteger("numCores"));
     newDevice.setRamSize(reqJson.getFloat("ramSize").intValue());
     newDevice.setArch(DeviceArch.valueOf(reqJson.getString("arch").toUpperCase()));
-
-    manager.addDevice(newDevice);
-
+    manager.noteDiscoveredDevice(newDevice);
     event.vertx().eventBus().publish(Constants.eventBusName, newDevice.getName());
     res.setStatusCode(200).end("Ok!");
   }
