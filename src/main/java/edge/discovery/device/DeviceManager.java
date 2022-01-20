@@ -52,7 +52,6 @@ public class DeviceManager {
 
   protected final int waitTimeDiscovery;
   protected final Set<Device> discoveredDevices;
-  protected final CountDownLatch initLatch;
 
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
@@ -66,7 +65,6 @@ public class DeviceManager {
     this.specUpdate = specUpdate;
     this.spec = specProv.getSpecification();
     this.waitTimeDiscovery = waitTimeDiscovery;
-    this.initLatch = new CountDownLatch(1);
     this.discoveredDevices = new HashSet<>();
   }
 
@@ -75,19 +73,6 @@ public class DeviceManager {
    */
   public void startSearch() {
     this.discoverySearch.broadcast();
-
-    this.vertx.setTimer(waitTimeDiscovery * 1000, timerId -> {
-      for (Device device : discoveredDevices) {
-        addDevice(device);
-      }
-      initLatch.countDown();
-    });
-
-    try {
-      initLatch.await();
-    } catch (InterruptedException e) {
-      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
-    }
   }
 
   public void noteDiscoveredDevice(Device device) {
@@ -102,17 +87,25 @@ public class DeviceManager {
     return this.devices.stream().filter(device -> device.getId() == id).findFirst();
   }
 
+  /**
+   * Deploys functions to a device and updates specification afterwards.
+   * (blocking)
+   * @param device which is added
+   */
   public void addDevice(Device device) {
-    devices.add(device);
+    logger.info("Deploying functions to device " + device.getUniqueName());
 
     spec.getMappings().forEach(m -> {
       if (PropertyServiceMapping.getEnactmentMode(m)
           .equals(PropertyServiceMapping.EnactmentMode.Local)) {
         var image = PropertyServiceMappingLocal.getImageName(m);
+
         CountDownLatch funcDeployLatch = new CountDownLatch(1);
-        deployFunction(device.getId(), image).onComplete(asyncRes -> {
+
+        deployFunction(device, image).onComplete(asyncRes -> {
           funcDeployLatch.countDown();
         });
+
         try {
           funcDeployLatch.await();
         } catch (InterruptedException e) {
@@ -135,16 +128,11 @@ public class DeviceManager {
   /**
    * Deploys a serverless function to a device.
    *
-   * @param id of the device the function is deployed to.
+   * @param device the function is deployed to.
    * @param function, the name of the function.
-   * @return true on success, false otherwise.
+   * @return future receiving true on success, false otherwise.
    */
-  public Future<Boolean> deployFunction(int id, String function) {
-    var deviceOptional = getDeviceById(id);
-    if (deviceOptional.isEmpty()) {
-      return Future.failedFuture("Device id of " + id + " unknown");
-    }
-    var device = deviceOptional.get();
+  public Future<Boolean> deployFunction(Device device, String function) {
     Promise<Boolean> promise = Promise.promise();
 
     httpClient.post(8080, device.getAddressString(), "/system/functions")
@@ -225,5 +213,9 @@ public class DeviceManager {
 
   public int getNextDeviceId() {
     return this.nextDeviceId++;
+  }
+
+  public Set<Device> getDiscoveredDevices() {
+    return discoveredDevices;
   }
 }

@@ -7,18 +7,19 @@ import edge.discovery.routes.ReqHandlerSearch;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LocalNetworkVerticle extends AbstractVerticle {
+public class DeviceRegistrationVerticle extends AbstractVerticle {
 
   private final DeviceManager deviceManager;
 
-  protected final Logger logger = LoggerFactory.getLogger(LocalNetworkVerticle.class);
+  protected final Logger logger = LoggerFactory.getLogger(DeviceRegistrationVerticle.class);
 
-  public LocalNetworkVerticle(DeviceManager deviceManager) {
+  public DeviceRegistrationVerticle(DeviceManager deviceManager) {
     this.deviceManager = deviceManager;
   }
 
@@ -27,7 +28,7 @@ public class LocalNetworkVerticle extends AbstractVerticle {
     var router = Router.router(vertx);
     configureRoutes(router);
 
-    vertx.createHttpServer()
+    HttpServer server = vertx.createHttpServer()
       .requestHandler(router)
       .listen(Constants.serverPort, http -> {
         if (http.succeeded()) {
