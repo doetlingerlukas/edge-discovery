@@ -30,10 +30,16 @@ public class ReqHandlerDeploy implements Handler<RoutingContext> {
     var deviceId = req.getInteger("deviceId");
     var function = req.getString("function");
 
-    Future<Boolean> future = deviceManager.deployFunction(deviceId, function);
+    var opt = deviceManager.getDeviceById(deviceId);
 
-    future.onComplete(asyncRes -> {
-      res.setStatusCode(200).end(asyncRes.result().toString());
-    });
+    if (opt.isPresent()) {
+      Future<Boolean> future = deviceManager.deployFunction(opt.get(), function);
+
+      future.onComplete(asyncRes -> {
+        res.setStatusCode(200).end(asyncRes.result().toString());
+      });
+    } else {
+      res.setStatusCode(404).end("Device not found.");
+    }
   }
 }
