@@ -39,6 +39,10 @@ public class Device {
     return address.toString().substring(1);
   }
 
+  public String getUniqueName() {
+    return name + "(" + getAddressString() + ")";
+  }
+
   public String getKey() {
     return key;
   }
