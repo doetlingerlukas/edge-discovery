@@ -100,9 +100,13 @@ public class DeviceManager {
           .equals(PropertyServiceMapping.EnactmentMode.Local)) {
         var image = PropertyServiceMappingLocal.getImageName(m);
 
-        CountDownLatch funcDeployLatch = new CountDownLatch(1);
+        CountDownLatch funcDeployLatch = new CountDownLatch(2);
 
         deployFunction(device, image).onComplete(asyncRes -> {
+          funcDeployLatch.countDown();
+        });
+
+        scaleFunction(device, image).onComplete(asyncRes -> {
           funcDeployLatch.countDown();
         });
 
@@ -174,6 +178,32 @@ public class DeviceManager {
           logger.debug(e.getMessage());
           promise.complete(false);
         });
+  }
+
+  /**
+   * Scales a serverless function at a device to exactly one replica.
+   *
+   * @param device the function is scaled at.
+   * @param function, the name of the function.
+   * @return future receiving true on success, false otherwise.
+   */
+  public Future<Boolean> scaleFunction(Device device, String function) {
+    Promise<Boolean> promise = Promise.promise();
+    var service = function.replaceAll(".+/", "");
+
+    httpClient.post(8080, device.getAddressString(), "/system/scale-function/" + service)
+      .basicAuthentication("admin", device.getKey()).putHeader("content-type", "application/json")
+      .sendJson(
+        new JsonObject().put("serviceName", service).put("replicas", 1))
+      .onSuccess(res -> {
+        if (res.statusCode() == 200) {
+          promise.complete(true);
+        } else {
+          promise.complete(false);
+        }
+      }).onFailure(e -> logger.debug(e.getMessage()));
+
+    return promise.future();
   }
 
   /**
