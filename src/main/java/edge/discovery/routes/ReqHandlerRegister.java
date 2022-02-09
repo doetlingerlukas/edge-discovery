@@ -1,6 +1,5 @@
 package edge.discovery.routes;
 
-import edge.discovery.Constants;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceArch;
 import edge.discovery.device.DeviceBenchmark;
