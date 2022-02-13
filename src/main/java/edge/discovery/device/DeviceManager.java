@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
@@ -92,7 +93,7 @@ public class DeviceManager {
    * (blocking)
    * @param device which is added
    */
-  public void addDevice(Device device) {
+  public void addDevice(CompletableFuture<String> future, Device device) {
     logger.info("Deploying functions to device " + device.getUniqueName());
 
     spec.getMappings().forEach(m -> {
@@ -119,6 +120,7 @@ public class DeviceManager {
     });
 
     specUpdate.addLocalResourceToModel(device);
+    future.complete("Done.");
   }
 
   /**

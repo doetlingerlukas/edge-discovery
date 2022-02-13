@@ -68,10 +68,6 @@ public class LocalNetworkResources implements ManagedComponent {
     } catch (InterruptedException e) {
       throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
     }
-
-    for (Device device : deviceManager.getDiscoveredDevices()) {
-      deviceManager.addDevice(device);
-    }
   }
 
   @Override

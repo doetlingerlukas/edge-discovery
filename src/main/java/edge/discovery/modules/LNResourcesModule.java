@@ -1,5 +1,6 @@
 package edge.discovery.modules;
 
+import edge.discovery.init.InitializerLocalResources;
 import org.opt4j.core.config.annotations.Info;
 import org.opt4j.core.config.annotations.Order;
 import org.opt4j.core.start.Constant;
@@ -24,6 +25,8 @@ public class LNResourcesModule extends FunctionModule {
   protected void config() {
     addManagedComponent(LocalNetworkResources.class);
     addFunctionFactoryUser(FunctionFactoryLocalResources.class);
+
+    addInitializer(InitializerLocalResources.class);
   }
 
   public int getWaitTimeInit() {
