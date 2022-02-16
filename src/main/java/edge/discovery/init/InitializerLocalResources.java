@@ -3,15 +3,15 @@ package edge.discovery.init;
 import at.uibk.dps.ee.core.Initializer;
 import at.uibk.dps.ee.guice.starter.VertxProvider;
 import com.google.inject.Inject;
-import edge.discovery.device.Device;
 import edge.discovery.device.DeviceManager;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -44,13 +44,15 @@ public class InitializerLocalResources implements Initializer {
 
     var futures = deviceManager.getDiscoveredDevices().stream()
       .map(d -> {
-        var future = new CompletableFuture<String>();
-        deviceManager.addDevice(future, d);
-        return future;
-      }).toArray(CompletableFuture[]::new);
+        final Promise<Boolean> devicePromise = Promise.promise();
+        deviceManager.addDevice(devicePromise, d);
+        return devicePromise.future();
+      }).collect(Collectors.toList());
 
-    var combinedFuture = CompletableFuture.allOf(futures);
+    var compositeFutureFuture = CompositeFuture.all(new ArrayList<>(futures))
+      .onSuccess(r -> resultPromise.complete())
+      .onFailure(r -> resultPromise.fail(r.getMessage()));
 
-    return (Future<String>) combinedFuture;
+    return resultPromise.future();
   }
 }
