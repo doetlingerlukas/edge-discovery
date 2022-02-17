@@ -3,18 +3,17 @@ package edge.discovery.modules;
 import org.opt4j.core.config.annotations.Info;
 import org.opt4j.core.config.annotations.Order;
 import org.opt4j.core.start.Constant;
-import at.uibk.dps.ee.enactables.serverless.FunctionFactoryServerless;
-import at.uibk.dps.ee.guice.modules.ResourceModule;
+import at.uibk.dps.ee.enactables.modules.FunctionModule;
 import edge.discovery.LocalNetworkResources;
 import edge.discovery.device.DeviceManager;
-import edge.discovery.graph.FunctionFactoryServerlessLocal;
+import edge.discovery.graph.FunctionFactoryLocalResources;
 
 /**
  * Configures the classes for the init and cleanup of local network resources.
  *
  * @author Fedor Smirnov
  */
-public class LNResourcesModule extends ResourceModule {
+public class LNResourcesModule extends FunctionModule {
 
   @Order(1)
   @Info("The time (in seconds) for the broadcast to discover local resources.")
@@ -23,8 +22,8 @@ public class LNResourcesModule extends ResourceModule {
 
   @Override
   protected void config() {
-    addLocalResources(LocalNetworkResources.class);
-    bind(FunctionFactoryServerless.class).to(FunctionFactoryServerlessLocal.class);
+    addManagedComponent(LocalNetworkResources.class);
+    addFunctionFactoryUser(FunctionFactoryLocalResources.class);
   }
 
   public int getWaitTimeInit() {

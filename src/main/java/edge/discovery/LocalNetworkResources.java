@@ -1,6 +1,6 @@
 package edge.discovery;
 
-import at.uibk.dps.ee.core.LocalResources;
+import at.uibk.dps.ee.guice.init_term.ManagedComponent;
 import at.uibk.dps.ee.guice.starter.VertxProvider;
 import at.uibk.dps.ee.model.graph.MappingsConcurrent;
 import at.uibk.dps.ee.model.graph.ResourceGraph;
@@ -9,6 +9,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceManager;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Fedor Smirnov, Lukas Dötlinger
  */
 @Singleton
-public class LocalNetworkResources implements LocalResources {
+public class LocalNetworkResources implements ManagedComponent {
 
   protected final Logger logger = LoggerFactory.getLogger(LocalNetworkResources.class);
 
@@ -40,15 +41,16 @@ public class LocalNetworkResources implements LocalResources {
    * @param vProv the vertx provider.
    */
   @Inject
-  public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider, DeviceManager deviceManager) {
+  public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider,
+      DeviceManager deviceManager) {
     this.resourceGraph = specProvider.getResourceGraph();
     this.mappings = specProvider.getMappings();
     this.deviceManager = deviceManager;
     this.vertx = vProv.getVertx();
   }
 
-  @Override
-  public void init() {
+  public void initBlocking() {
+    // TODO this method could by rewritten to avoid blocking
     var registrationServer = new DeviceRegistrationVerticle(this.deviceManager);
     this.vertx.deployVerticle(registrationServer).onComplete(asyncRes -> {
       this.deviceManager.startSearch();
@@ -73,7 +75,20 @@ public class LocalNetworkResources implements LocalResources {
   }
 
   @Override
-  public void close() {
-    deviceManager.releaseAllDevice();
+  public Future<String> initialize() {
+    return vertx.executeBlocking(promise -> {
+      initBlocking();
+      promise.complete("Device discovery completed");
+    });
   }
+
+  @Override
+  public Future<String> terminate() {
+    return vertx.executeBlocking(promise -> {
+      deviceManager.releaseAllDevice();
+      promise.complete("Devices released");
+    });
+  }
+
+
 }
