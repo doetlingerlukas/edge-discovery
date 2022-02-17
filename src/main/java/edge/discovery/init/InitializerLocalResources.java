@@ -43,6 +43,7 @@ public class InitializerLocalResources implements Initializer {
     final Promise<String> resultPromise = Promise.promise();
 
     var futures = deviceManager.getDiscoveredDevices().stream()
+      .filter(d -> deviceManager.getDeviceById(d.getId()).isEmpty())
       .map(d -> {
         final Promise<Boolean> devicePromise = Promise.promise();
         deviceManager.addDevice(devicePromise, d);

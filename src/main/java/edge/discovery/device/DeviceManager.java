@@ -119,6 +119,7 @@ public class DeviceManager {
     });
 
     specUpdate.addLocalResourceToModel(device);
+    devices.add(device);
     promise.complete(true);
   }
 
