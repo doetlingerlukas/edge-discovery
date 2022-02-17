@@ -12,6 +12,7 @@ import edge.discovery.device.DeviceManager;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class LocalNetworkResources implements ManagedComponent {
   protected ResourceGraph resourceGraph;
   protected final MappingsConcurrent mappings;
   protected DeviceManager deviceManager;
+  protected final int waitTimeInit;
 
   protected final Vertx vertx;
 
@@ -43,7 +45,10 @@ public class LocalNetworkResources implements ManagedComponent {
    */
   @Inject
   public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider,
-      DeviceManager deviceManager) {
+    DeviceManager deviceManager, @Constant(namespace = LocalNetworkResources.class,
+    value = "waitTimeInit") final int waitTimeInit) {
+
+    this.waitTimeInit = waitTimeInit;
     this.resourceGraph = specProvider.getResourceGraph();
     this.mappings = specProvider.getMappings();
     this.deviceManager = deviceManager;
@@ -53,16 +58,15 @@ public class LocalNetworkResources implements ManagedComponent {
   @Override
   public Future<String> initialize() {
     Promise<String> promise = Promise.promise();
-    int secondsToWait = 5;
 
     var registrationServer = new DeviceRegistrationVerticle(this.deviceManager);
     this.vertx.deployVerticle(registrationServer).onComplete(asyncRes -> {
       this.deviceManager.startSearch();
     });
 
-    this.vertx.setTimer(secondsToWait * 1000, timerId -> {
+    this.vertx.setTimer(waitTimeInit * 1000, timerId -> {
       promise.complete("Device discovery completed");
-      logger.info("Successfully waited for new devices for {} seconds.", secondsToWait);
+      logger.info("Successfully waited for new devices for {} seconds.", waitTimeInit);
     });
 
     return promise.future();

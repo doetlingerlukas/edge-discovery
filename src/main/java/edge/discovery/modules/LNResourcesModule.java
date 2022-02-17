@@ -18,7 +18,7 @@ public class LNResourcesModule extends FunctionModule {
 
   @Order(1)
   @Info("The time (in seconds) for the broadcast to discover local resources.")
-  @Constant(value = "waitTimeInit", namespace = DeviceManager.class)
+  @Constant(value = "waitTimeInit", namespace = LocalNetworkResources.class)
   public int waitTimeInit = 5;
 
   @Override

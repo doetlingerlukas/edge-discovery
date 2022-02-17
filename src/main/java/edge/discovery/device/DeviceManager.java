@@ -14,7 +14,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
-import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,21 +49,17 @@ public class DeviceManager {
   protected final EnactmentSpecification spec;
   protected final Vertx vertx;
 
-  protected final int waitTimeDiscovery;
   protected final Set<Device> discoveredDevices;
 
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
-      final SpecificationUpdate specUpdate, SpecificationProvider specProv,
-      @Constant(value = "waitTimeInit",
-          namespace = DeviceManager.class) final int waitTimeDiscovery) {
+      final SpecificationUpdate specUpdate, SpecificationProvider specProv) {
     this.devices = new ArrayList<>();
     this.vertx = vProv.getVertx();
     this.httpClient = WebClient.create(vertx);
     this.discoverySearch = discoverySearch;
     this.specUpdate = specUpdate;
     this.spec = specProv.getSpecification();
-    this.waitTimeDiscovery = waitTimeDiscovery;
     this.discoveredDevices = new HashSet<>();
   }
 
