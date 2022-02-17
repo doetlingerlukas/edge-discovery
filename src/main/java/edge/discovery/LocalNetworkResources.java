@@ -10,6 +10,7 @@ import com.google.inject.Singleton;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceManager;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,38 +50,27 @@ public class LocalNetworkResources implements ManagedComponent {
     this.vertx = vProv.getVertx();
   }
 
-  public void initBlocking() {
-    // TODO this method could by rewritten to avoid blocking
+  @Override
+  public Future<String> initialize() {
+    Promise<String> promise = Promise.promise();
+    int secondsToWait = 5;
+
     var registrationServer = new DeviceRegistrationVerticle(this.deviceManager);
     this.vertx.deployVerticle(registrationServer).onComplete(asyncRes -> {
       this.deviceManager.startSearch();
     });
 
-    CountDownLatch latch = new CountDownLatch(1);
-    int secondsToWait = 5; // Should be configurable in GUI.
-
     this.vertx.setTimer(secondsToWait * 1000, timerId -> {
-      latch.countDown();
-    });
-
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
-    }
-  }
-
-  @Override
-  public Future<String> initialize() {
-    return vertx.executeBlocking(promise -> {
-      initBlocking();
       promise.complete("Device discovery completed");
+      logger.info("Successfully waited for new devices for {} seconds.", secondsToWait);
     });
+
+    return promise.future();
   }
 
   @Override
   public Future<String> terminate() {
-    return vertx.executeBlocking(promise -> {
+    return Future.future(promise -> {
       deviceManager.releaseAllDevice();
       promise.complete("Devices released");
     });
