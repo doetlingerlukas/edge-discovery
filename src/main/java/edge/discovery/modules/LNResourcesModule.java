@@ -1,13 +1,11 @@
 package edge.discovery.modules;
 
-import edge.discovery.init.InitializerLocalResources;
+import at.uibk.dps.ee.enactables.modules.FunctionModule;
+import edge.discovery.LocalNetworkResources;
+import edge.discovery.graph.FunctionFactoryLocalResources;
 import org.opt4j.core.config.annotations.Info;
 import org.opt4j.core.config.annotations.Order;
 import org.opt4j.core.start.Constant;
-import at.uibk.dps.ee.enactables.modules.FunctionModule;
-import edge.discovery.LocalNetworkResources;
-import edge.discovery.device.DeviceManager;
-import edge.discovery.graph.FunctionFactoryLocalResources;
 
 /**
  * Configures the classes for the init and cleanup of local network resources.
@@ -25,8 +23,6 @@ public class LNResourcesModule extends FunctionModule {
   protected void config() {
     addManagedComponent(LocalNetworkResources.class);
     addFunctionFactoryUser(FunctionFactoryLocalResources.class);
-
-    addInitializer(InitializerLocalResources.class);
   }
 
   public int getWaitTimeInit() {

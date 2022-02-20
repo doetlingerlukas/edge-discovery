@@ -8,6 +8,7 @@ import at.uibk.dps.ee.model.properties.PropertyServiceMappingLocal;
 import edge.discovery.Constants;
 import edge.discovery.DiscoverySearch;
 import edge.discovery.graph.SpecificationUpdate;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -87,35 +88,35 @@ public class DeviceManager {
    * (blocking)
    * @param device which is added
    */
-  public void addDevice(Promise<Boolean> promise, Device device) {
-    logger.info("Deploying functions to device " + device.getUniqueName());
+  public Future<Boolean> addDevice(Device device) {
+    Promise<Boolean> promise = Promise.promise();
+    logger.info("Deploying functions to {}.", device.getUniqueName());
 
-    spec.getMappings().forEach(m -> {
-      if (PropertyServiceMapping.getEnactmentMode(m)
-          .equals(PropertyServiceMapping.EnactmentMode.Local)) {
+    var futures = spec.getMappings().mappingStream()
+      .filter(m -> PropertyServiceMapping.getEnactmentMode(m)
+        .equals(PropertyServiceMapping.EnactmentMode.Local))
+      .map(m -> {
         var image = PropertyServiceMappingLocal.getImageName(m);
+        Promise<Boolean> mappingPromise = Promise.promise();
 
-        CountDownLatch funcDeployLatch = new CountDownLatch(2);
-
-        deployFunction(device, image).onComplete(asyncRes -> {
-          funcDeployLatch.countDown();
+        deployFunction(device, image).onComplete(r1 -> {
+          scaleFunction(device, image).onComplete(r2 -> {
+            specUpdate.addLocalResourceToModel(device);
+            devices.add(device);
+            logger.info("Deployed function {} to device {}.", image, device.getUniqueName());
+            mappingPromise.complete(true);
+          });
         });
 
-        scaleFunction(device, image).onComplete(asyncRes -> {
-          funcDeployLatch.countDown();
-        });
+        return mappingPromise.future();
+      })
+      .collect(Collectors.toList());
 
-        try {
-          funcDeployLatch.await();
-        } catch (InterruptedException e) {
-          throw new IllegalStateException("Interrupted while waiting for function deployment", e);
-        }
-      }
-    });
+    CompositeFuture.join(new ArrayList<>(futures))
+      .onSuccess(r -> promise.complete(true))
+      .onFailure(r -> promise.complete(false));
 
-    specUpdate.addLocalResourceToModel(device);
-    devices.add(device);
-    promise.complete(true);
+    return promise.future();
   }
 
   /**

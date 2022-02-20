@@ -9,6 +9,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceManager;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -16,7 +17,9 @@ import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 
 /**
@@ -65,8 +68,19 @@ public class LocalNetworkResources implements ManagedComponent {
     });
 
     this.vertx.setTimer(waitTimeInit * 1000, timerId -> {
-      promise.complete("Device discovery completed");
       logger.info("Successfully waited for new devices for {} seconds.", waitTimeInit);
+
+      var futures = deviceManager.getDiscoveredDevices().stream()
+        .filter(d -> deviceManager.getDeviceById(d.getId()).isEmpty())
+        .map(d -> deviceManager.addDevice(d))
+        .collect(Collectors.toList());
+
+      var compositeFutureFuture = CompositeFuture.all(new ArrayList<>(futures))
+        .onSuccess(r -> {
+          logger.info("Device discovery completed.");
+          promise.complete("Device discovery completed");
+        })
+        .onFailure(r -> promise.fail(r.getMessage()));
     });
 
     return promise.future();
