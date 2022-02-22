@@ -58,7 +58,7 @@ public final class PsMappingLocalRes extends AbstractPropertyService {
     Mapping<Task, Resource> result = new Mapping<Task, Resource>(mappingId, func, res);
     makeLocResMapping(result);
     setUrl(result, url);
-    PropertyServiceMapping.setEnactmentMode(result, EnactmentMode.Serverless);
+    PropertyServiceMapping.setEnactmentMode(result, EnactmentMode.Other);
     return result;
   }
 
