@@ -9,12 +9,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import edge.discovery.device.Device;
 import edge.discovery.device.DeviceManager;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 
 /**
@@ -32,6 +37,7 @@ public class LocalNetworkResources implements ManagedComponent {
   protected ResourceGraph resourceGraph;
   protected final MappingsConcurrent mappings;
   protected DeviceManager deviceManager;
+  protected final int waitTimeInit;
 
   protected final Vertx vertx;
 
@@ -42,49 +48,47 @@ public class LocalNetworkResources implements ManagedComponent {
    */
   @Inject
   public LocalNetworkResources(VertxProvider vProv, final SpecificationProvider specProvider,
-      DeviceManager deviceManager) {
+    DeviceManager deviceManager, @Constant(namespace = LocalNetworkResources.class,
+    value = "waitTimeInit") final int waitTimeInit) {
+
+    this.waitTimeInit = waitTimeInit;
     this.resourceGraph = specProvider.getResourceGraph();
     this.mappings = specProvider.getMappings();
     this.deviceManager = deviceManager;
     this.vertx = vProv.getVertx();
   }
 
-  public void initBlocking() {
-    // TODO this method could by rewritten to avoid blocking
+  @Override
+  public Future<String> initialize() {
+    Promise<String> promise = Promise.promise();
+
     var registrationServer = new DeviceRegistrationVerticle(this.deviceManager);
     this.vertx.deployVerticle(registrationServer).onComplete(asyncRes -> {
       this.deviceManager.startSearch();
     });
 
-    CountDownLatch latch = new CountDownLatch(1);
-    int secondsToWait = 5; // Should be configurable in GUI.
+    this.vertx.setTimer(waitTimeInit * 1000, timerId -> {
+      logger.info("Successfully waited for new devices for {} seconds.", waitTimeInit);
 
-    this.vertx.setTimer(secondsToWait * 1000, timerId -> {
-      latch.countDown();
+      var futures = deviceManager.getDiscoveredDevices().stream()
+        .filter(d -> deviceManager.getDeviceById(d.getId()).isEmpty())
+        .map(d -> deviceManager.addDevice(d))
+        .collect(Collectors.toList());
+
+      var compositeFutureFuture = CompositeFuture.all(new ArrayList<>(futures))
+        .onSuccess(r -> {
+          logger.info("Device discovery completed.");
+          promise.complete("Device discovery completed");
+        })
+        .onFailure(r -> promise.fail(r.getMessage()));
     });
 
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      throw new IllegalStateException("Interrupted while waiting for the LN devices", e);
-    }
-
-    for (Device device : deviceManager.getDiscoveredDevices()) {
-      deviceManager.addDevice(device);
-    }
-  }
-
-  @Override
-  public Future<String> initialize() {
-    return vertx.executeBlocking(promise -> {
-      initBlocking();
-      promise.complete("Device discovery completed");
-    });
+    return promise.future();
   }
 
   @Override
   public Future<String> terminate() {
-    return vertx.executeBlocking(promise -> {
+    return Future.future(promise -> {
       deviceManager.releaseAllDevice();
       promise.complete("Devices released");
     });

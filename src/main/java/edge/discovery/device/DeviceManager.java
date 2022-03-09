@@ -8,13 +8,13 @@ import at.uibk.dps.ee.model.properties.PropertyServiceMappingLocal;
 import edge.discovery.Constants;
 import edge.discovery.DiscoverySearch;
 import edge.discovery.graph.SpecificationUpdate;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
-import org.opt4j.core.start.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,21 +50,17 @@ public class DeviceManager {
   protected final EnactmentSpecification spec;
   protected final Vertx vertx;
 
-  protected final int waitTimeDiscovery;
-  protected final Set<Device> discoveredDevices;
+  protected Set<Device> discoveredDevices;
 
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
-      final SpecificationUpdate specUpdate, SpecificationProvider specProv,
-      @Constant(value = "waitTimeInit",
-          namespace = DeviceManager.class) final int waitTimeDiscovery) {
+      final SpecificationUpdate specUpdate, SpecificationProvider specProv) {
     this.devices = new ArrayList<>();
     this.vertx = vProv.getVertx();
     this.httpClient = WebClient.create(vertx);
     this.discoverySearch = discoverySearch;
     this.specUpdate = specUpdate;
     this.spec = specProv.getSpecification();
-    this.waitTimeDiscovery = waitTimeDiscovery;
     this.discoveredDevices = new HashSet<>();
   }
 
@@ -92,33 +88,35 @@ public class DeviceManager {
    * (blocking)
    * @param device which is added
    */
-  public void addDevice(Device device) {
-    logger.info("Deploying functions to device " + device.getUniqueName());
+  public Future<Boolean> addDevice(Device device) {
+    Promise<Boolean> promise = Promise.promise();
+    logger.info("Deploying functions to {}.", device.getUniqueName());
 
-    spec.getMappings().forEach(m -> {
-      if (PropertyServiceMapping.getEnactmentMode(m)
-          .equals(PropertyServiceMapping.EnactmentMode.Local)) {
+    var futures = spec.getMappings().mappingStream()
+      .filter(m -> PropertyServiceMapping.getEnactmentMode(m)
+        .equals(PropertyServiceMapping.EnactmentMode.Local))
+      .map(m -> {
         var image = PropertyServiceMappingLocal.getImageName(m);
+        Promise<Boolean> mappingPromise = Promise.promise();
 
-        CountDownLatch funcDeployLatch = new CountDownLatch(2);
-
-        deployFunction(device, image).onComplete(asyncRes -> {
-          funcDeployLatch.countDown();
+        deployFunction(device, image).onComplete(r1 -> {
+          scaleFunction(device, image).onComplete(r2 -> {
+            specUpdate.addLocalResourceToModel(device);
+            devices.add(device);
+            logger.info("Deployed function {} to device {}.", image, device.getUniqueName());
+            mappingPromise.complete(true);
+          });
         });
 
-        scaleFunction(device, image).onComplete(asyncRes -> {
-          funcDeployLatch.countDown();
-        });
+        return mappingPromise.future();
+      })
+      .collect(Collectors.toList());
 
-        try {
-          funcDeployLatch.await();
-        } catch (InterruptedException e) {
-          throw new IllegalStateException("Interrupted while waiting for function deployment", e);
-        }
-      }
-    });
+    CompositeFuture.join(new ArrayList<>(futures))
+      .onSuccess(r -> promise.complete(true))
+      .onFailure(r -> promise.complete(false));
 
-    specUpdate.addLocalResourceToModel(device);
+    return promise.future();
   }
 
   /**
@@ -239,6 +237,8 @@ public class DeviceManager {
   public void removeDeviceFromList(Device device) {
     this.devices =
         this.devices.stream().filter(d -> d.getId() == device.getId()).collect(Collectors.toList());
+    this.discoveredDevices =
+        this.discoveredDevices.stream().filter(d -> d.getId() == device.getId()).collect(Collectors.toSet());
   }
 
   public int getNextDeviceId() {
