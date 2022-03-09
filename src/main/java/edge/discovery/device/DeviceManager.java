@@ -50,7 +50,7 @@ public class DeviceManager {
   protected final EnactmentSpecification spec;
   protected final Vertx vertx;
 
-  protected final Set<Device> discoveredDevices;
+  protected Set<Device> discoveredDevices;
 
   @Inject
   public DeviceManager(VertxProvider vProv, DiscoverySearch discoverySearch,
@@ -237,6 +237,8 @@ public class DeviceManager {
   public void removeDeviceFromList(Device device) {
     this.devices =
         this.devices.stream().filter(d -> d.getId() == device.getId()).collect(Collectors.toList());
+    this.discoveredDevices =
+        this.discoveredDevices.stream().filter(d -> d.getId() == device.getId()).collect(Collectors.toSet());
   }
 
   public int getNextDeviceId() {
